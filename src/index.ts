@@ -4,6 +4,7 @@ import {
   runCli,
   DirectoryItem,
 } from "@watchedcom/sdk";
+import * as cheerio from "cheerio";
 import { getAllCollections, getCollectionResults } from "./videvo.service";
 
 const videvoAddon = createWorkerAddon({
@@ -11,7 +12,7 @@ const videvoAddon = createWorkerAddon({
   name: "videvo",
   version: "0.0.0",
   // Trigger this addon on this kind of items
-  itemTypes: ["movie", "series"],
+  itemTypes: ["movie"],
   requestArgs: [
     // Trigger this addon when an item has a `name` field
     "name",
@@ -22,7 +23,7 @@ const videvoAddon = createWorkerAddon({
 });
 
 videvoAddon.registerActionHandler("directory", async (input, ctx) => {
-  console.log("directory", input);
+  // console.log("directory", input);
 
   const page = parseInt(<string>input.cursor) || 1;
 
@@ -61,7 +62,38 @@ videvoAddon.registerActionHandler("directory", async (input, ctx) => {
 });
 
 videvoAddon.registerActionHandler("item", async (input, ctx) => {
-  console.log("item", input);
+  // console.log("item", input);
+
+  const id = input.ids.id;
+
+  const result = ctx.fetch(`https://www.videvo.net/video/${id}/`);
+
+  const $ = cheerio.load(await (await result).text());
+
+  const src = $("div.videowrapper video source").attr("src");
+  const filename = src?.split("/").pop()?.split(".").shift();
+
+  return {
+    type: "movie",
+    ids: input.ids,
+    name: $("h2.title").text().trim(),
+    description: $("p.description-paragraph").first().text().trim(),
+    images: {
+      poster: $("video#video").attr("poster"),
+    },
+    sources: [
+      {
+        type: "url",
+        name: "Medium",
+        url: "https://cdn.videvo.net/" + src,
+      },
+      {
+        type: "url",
+        name: "High",
+        url: `https://cdn.videvo.net/videvo_files/videos/${filename}.mp4`,
+      },
+    ],
+  };
 });
 
 runCli([videvoAddon]);
