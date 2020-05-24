@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@watchedcom/sdk": "^0.31.1",
+    "cheerio": "^1.0.0-rc.3",
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
+    "@types/cheerio": "^0.22.18",
     "@types/node-fetch": "^2.5.7",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.2",

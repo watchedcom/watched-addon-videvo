@@ -4,7 +4,7 @@ import {
   runCli,
   DirectoryItem,
 } from "@watchedcom/sdk";
-import { getAllCollections } from "./videvo.service";
+import { getAllCollections, getCollectionResults } from "./videvo.service";
 
 const videvoAddon = createWorkerAddon({
   id: "videvo",
@@ -25,6 +25,18 @@ videvoAddon.registerActionHandler("directory", async (input, ctx) => {
   console.log("directory", input);
 
   const page = parseInt(<string>input.cursor) || 1;
+
+  if (input.id) {
+    const items = await getCollectionResults({
+      id: <string>input.id,
+      page: page - 1,
+    });
+
+    return {
+      items,
+      nextCursor: items.length ? page + 1 : null,
+    };
+  }
 
   const result = await getAllCollections({
     page,
